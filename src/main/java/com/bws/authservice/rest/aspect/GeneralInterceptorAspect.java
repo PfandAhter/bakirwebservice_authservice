@@ -5,6 +5,7 @@ import com.bws.authservice.repository.ErrorCodeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
@@ -18,21 +19,34 @@ public class GeneralInterceptorAspect {
     private final ErrorCodeRepository errorCodeRepository;
 
     @Before(value = "execution(* com.bws.authservice.exceptions..*(..)) ")
-    public void beforeException (JoinPoint joinPoint){
-        Object [] parameters = joinPoint.getArgs();
-        for(Object param : parameters){
+    public void beforeException(JoinPoint joinPoint) {
+        Object[] parameters = joinPoint.getArgs();
+        for (Object param : parameters) {
             // if(instanceof Exception param) tarzi da kullanilabilirdi..
-            if(param instanceof Exception){
-                if(errorCodeRepository.findErrorByError(param.getClass().getName()) == null){
-                    ErrorCodes errorCodes = new ErrorCodes();
-                    errorCodes.setError(param.getClass().getName());
-                    errorCodes.setError_description(((Exception) param).getMessage());
-                    errorCodeRepository.save(errorCodes);
-                    Long localCode = 5000L;
-                    errorCodes.setError_code(errorCodes.getId()+localCode);
-                    errorCodeRepository.save(errorCodes);
-                }
+            if (param instanceof Exception) {
+                ErrorCodes errorCodes = new ErrorCodes();
+                errorCodes.setError(param.getClass().getName());
+                errorCodes.setError_description(((Exception) param).getMessage());
+                errorCodeRepository.save(errorCodes);
+                Long localCode = 5000L;
+                errorCodes.setError_code(errorCodes.getId() + localCode);
+                errorCodeRepository.save(errorCodes);
             }
         }
     }
+
+
+    @After(value = "execution(* com.bws.authservice.rest.service..*(..)) ")
+    public void afterLoginService(JoinPoint joinPoint) {
+        log.info("Service is called: " + joinPoint.getSignature().getName());
+        Object[] parameters = joinPoint.getArgs();
+
+        for (Object param : parameters) {
+
+            log.info("Param: " + param);
+        }
+
+    }
+
+
 }

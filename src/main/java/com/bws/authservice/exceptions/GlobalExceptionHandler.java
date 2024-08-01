@@ -3,6 +3,8 @@ package com.bws.authservice.exceptions;
 import com.bws.authservice.api.response.BaseResponse;
 import com.bws.authservice.model.constants.Constants;
 import com.bws.authservice.model.constants.ErrorCodeConstants;
+import feign.FeignException;
+import feign.RetryableException;
 import jakarta.security.auth.message.AuthException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +36,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(createFailResponse(e.getMessage()));
     }
 
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<BaseResponse> handleException(FeignException e){
+        return ResponseEntity.badRequest().body(createFailResponse("ACCESS DENIED"));
+    }
+
     @ExceptionHandler(ResourceAccessException.class)
     public ResponseEntity<BaseResponse> handleException(ResourceAccessException e){
+        return ResponseEntity.badRequest().body(createFailResponse(ErrorCodeConstants.SERVICE_UNAVAILABLE));
+    }
+
+    @ExceptionHandler(RetryableException.class)
+    public ResponseEntity<BaseResponse> handleException(RetryableException e){
         return ResponseEntity.badRequest().body(createFailResponse(ErrorCodeConstants.SERVICE_UNAVAILABLE));
     }
 

@@ -28,10 +28,10 @@ import org.springframework.web.client.RestTemplate;
 public class ApplicationConfiguration {
     private final UserRepository userRepository;
 
-    @Bean
+/*    @Bean
     public RestTemplate restTemplate(){
         return new RestTemplate();
-    }
+    }*/
 
     @Bean
     public ModelMapper modelMapper(){

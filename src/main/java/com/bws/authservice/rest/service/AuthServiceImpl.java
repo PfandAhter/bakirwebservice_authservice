@@ -1,49 +1,74 @@
 package com.bws.authservice.rest.service;
 
-import com.bws.authservice.api.request.AuthUserRequest;
-import com.bws.authservice.api.request.UserAddRequest;
+import com.bws.authservice.api.client.TokenServiceClient;
+import com.bws.authservice.api.client.UserServiceClient;
+import com.bws.authservice.api.request.*;
 import com.bws.authservice.api.response.AuthUserResponse;
 import com.bws.authservice.api.response.BaseResponse;
+import com.bws.authservice.exceptions.PasswordNotMatchedException;
+import com.bws.authservice.exceptions.UserNotActiveException;
+import com.bws.authservice.model.entity.User;
+import com.bws.authservice.repository.UserRepository;
 import com.bws.authservice.rest.service.interfaces.IAuthService;
+import com.bws.authservice.rest.service.interfaces.IPasswordService;
+import com.bws.authservice.rest.util.Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import static com.bws.authservice.model.constants.PropertyConstants.REST_TEMPLATE_REQUEST_MICROSERVICE_TOKEN_SERVICE_TOKEN_GENERATE;
-import static com.bws.authservice.model.constants.PropertyConstants.REST_TEMPLATE_REQUEST_MICROSERVICE_USER_SERVICE_USER_REGISTER;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthServiceImpl implements IAuthService {
-    private final RestTemplate restTemplate;
+public class AuthServiceImpl implements IAuthService  {
 
     private final AuthenticationManager authenticationManager;
 
-    @Value(REST_TEMPLATE_REQUEST_MICROSERVICE_USER_SERVICE_USER_REGISTER)
-    private String registerUserFromUserServicePaths;
+    private final TokenServiceClient tokenServiceClient;
+
+    private final UserRepository userRepository;
+
+    private final UserServiceClient userServiceClient;
 
     @Override
     public BaseResponse createUser(UserAddRequest request) {
-        return restTemplate.postForObject(registerUserFromUserServicePaths,request,BaseResponse.class);
+        return userServiceClient.registerUser(request);
     }
-
-    @Value(REST_TEMPLATE_REQUEST_MICROSERVICE_TOKEN_SERVICE_TOKEN_GENERATE)
-    private String generateTokenFromTokenServicePaths;
 
     @Override
-    public AuthUserResponse authUser(AuthUserRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(),request.getPassword())
-        );
-        AuthUserResponse response = restTemplate.postForObject(generateTokenFromTokenServicePaths,request,AuthUserResponse.class);
+    public AuthUserResponse authUser(AuthUserRequest request) throws UserNotActiveException{
+        //int coreCount = Runtime.getRuntime().availableProcessors();
 
-        return AuthUserResponse.builder()
-                .token(response.getToken())
-                .build();
+        User user = userRepository.findByUsername(request.getUsername());
+
+        if(user.getActive() == 1) {
+
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+
+            AuthUserResponse response = tokenServiceClient.generateToken(request);
+
+            return AuthUserResponse.builder()
+                    .token(response.getToken())
+                    .role(user.getRole())
+                    .build();
+        }else{
+            throw new UserNotActiveException("USER NOT ACTIVE \nCHECK EMAIL VERIFICATION \nCHECK USER NOT ACTIVE");
+        }
+
     }
+
+    @Override
+    public BaseResponse logoutUser (BaseRequest baseRequest) {
+        return tokenServiceClient.logoutUser(baseRequest);
+    }
+
+    public BaseResponse registerSeller (SellerAddRequest request){
+        return userServiceClient.registerSeller(request);
+    }
+
 }

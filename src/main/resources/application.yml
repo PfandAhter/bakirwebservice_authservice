@@ -19,19 +19,48 @@ spring:
     banner-mode: off
   application:
     name: auth-service
+
+client:
+  feign:
+    microServiceRegister-service:
+      path: http://localhost:8090/registerservice
+      ready: /ready
+      stopped: /stopped
+
+    user-service:
+      path: http://localhost:8082/user
+      registerUser: /register-user
+      passwordChange: /password/change
+      registerSeller: /register-seller
+      passwordForget: /password/forget
+      passwordChangeWithCode: /password/change-with-code
+
+    token-service:
+      path: http://localhost:8079/token
+      extractUsername: /extract/username
+      generateToken: /generate/token
+      logoutUser: /logout
+
+
 app:
-  routesMicroservices:
-    tokenService:
-      generateToken: http://localhost:8079/tokenservice/generatetoken
-    userService:
-      registerUser: http://localhost:8082/userservice/registeruser
   routesController:
-    requestmapping:
-      unlocked:
-        authServiceController: /auth
-    notlocked:
-      login:
-        authUser: /login
-        registerUser: /register
+    controllers:
+      notSecure:
+          authServiceController: /auth
+    requestMapping:
+      secure:
+        login:
+          passwordChange: /password/change
+          logoutUser: /logout
+      notSecure:
+        login:
+          registerSeller: /register-seller
+          authUser: /login
+          registerUser: /register
+
+        password:
+          passwordChangeWithCode: /password/change-with-code
+          passwordForget: /password/forget
+
   jwtSecret: S5arZ8qX8Anvk60LIHdGKZiGyLAyxW+LU1Xw2H4R6Uu1ndlUNPqhpVuKtFsfFvA+
   jwtCryptoSecret : sBnlg0BGosgPMQju

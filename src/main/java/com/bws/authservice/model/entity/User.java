@@ -1,19 +1,12 @@
 package com.bws.authservice.model.entity;
 
 import com.bws.authservice.model.Role;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
-import jakarta.persistence.Table;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.EnumType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,9 +25,9 @@ import java.util.List;
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id")
-    private Long user_id;
+    private String userId;
 
     @Column(name = "username")
     private String username;
@@ -56,6 +49,10 @@ public class User implements UserDetails {
 
     @Column(name = "password")
     private String password;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    private List<Balance> balance;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

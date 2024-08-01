@@ -1,7 +1,7 @@
 package com.bws.authservice.model;
 
 public enum Role {
-    USER,
+    CUSTOMER,
     SELLER,
     ADMIN
 }
